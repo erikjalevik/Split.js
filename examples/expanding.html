@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Split.js</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.css">
+  <style>
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    padding: 8px;
+    background-color: #F6F6F6;
+  }
+
+  .split {
+    width: 400px;
+    height: 400px;
+
+    overflow: auto;
+
+    border: solid;
+    border-width: 1px;
+    margin-bottom: 20px;
+  }
+
+  .content.horizontal {
+    float: left;
+    height: 100%;
+  }
+
+  .content.vertical {
+    width: 100%;
+  }
+
+  .a {
+    background-color: rgb(110, 65, 145);
+  }
+
+  .b {
+    background-color: rgb(220, 40, 100);
+  }
+
+  .c {
+    background-color: rgb(210, 60, 40);
+  }
+
+  .gutter {
+    background-color: #eee;
+    background-repeat: no-repeat;
+    background-position: 50%;
+  }
+
+  .gutter.gutter-horizontal {
+    float: left;
+    cursor: col-resize;
+    background-image: url('../grips/vertical.png');
+    height: 100%;
+  }
+
+  .gutter.gutter-vertical {
+    cursor: row-resize;
+    background-image: url('../grips/horizontal.png');
+    width: 100%;
+  }
+
+  </style>
+</head>
+<body>
+    <div id="sh" class="split split-horizontal">
+      <div id="ha" class="content horizontal a"></div>
+      <div id="hb" class="content horizontal b"></div>
+      <div id="hc" class="content horizontal c"></div>
+      <div id="hd" class="content horizontal d"></div>
+    </div>
+    <div id="sv" class="split split-vertical">
+      <div id="va" class="content vertical a"></div>
+      <div id="vb" class="content vertical b"></div>
+      <div id="vc" class="content vertical c"></div>
+      <div id="vd" class="content vertical d"></div>
+    </div>
+</body>
+<script src="../split.js"></script>
+<script>
+    Split(['#ha', '#hb', '#hc', '#hd'], {
+      mode: 'expanding',
+      direction: 'horizontal',
+      gutterSize: 8,
+      cursor: 'col-resize',
+      snapOffset: 0,
+      minSize: 10,
+      sizes: [33, 33, 33, 0]
+    })
+    Split(['#va', '#vb', '#vc', '#vd'], {
+      mode: 'expanding',
+      direction: 'vertical',
+      gutterSize: 8,
+      cursor: 'row-resize',
+      snapOffset: 0,
+      minSize: 10,
+      sizes: [33, 33, 33, 0]
+    })
+</script>
+</html>
