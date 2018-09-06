@@ -12,6 +12,8 @@ const removeEventListener = 'removeEventListener'
 const getBoundingClientRect = 'getBoundingClientRect'
 const HORIZONTAL = 'horizontal'
 const NOOP = () => false
+const EXPANDING = 'expanding'
+const CONSTRAINED = 'constrained'
 
 // Figure out if we're in IE8 or not. IE8 will still render correctly,
 // but will be static instead of draggable.
@@ -59,17 +61,21 @@ const defaultGutterFn = (i, gutterDirection) => {
     return gut
 }
 
-const defaultElementStyleFn = (dim, size, gutSize) => {
+const defaultElementStyleFn = (dim, size, gutSize, mode) => {
     const style = {}
 
-    if (!isString(size)) {
-        if (!isIE8) {
-            style[dim] = `${calc}(${size}% - ${gutSize}px)`
+    if (mode === CONSTRAINED) {
+        if (!isString(size)) {
+            if (!isIE8) {
+                style[dim] = `${calc}(${size}% - ${gutSize}px)`
+            } else {
+                style[dim] = `${size}%`
+            }
         } else {
-            style[dim] = `${size}%`
+            style[dim] = size
         }
     } else {
-        style[dim] = size
+        style[dim] = `${size}px`
     }
 
     return style
@@ -132,6 +138,7 @@ const Split = (ids, options = {}) => {
     const gutter = getOption(options, 'gutter', defaultGutterFn)
     const elementStyle = getOption(options, 'elementStyle', defaultElementStyleFn)
     const gutterStyle = getOption(options, 'gutterStyle', defaultGutterStyleFn)
+    const mode = getOption(options, 'mode', CONSTRAINED)
 
     // 2. Initialize a bunch of strings based on the direction we're splitting.
     // A lot of the behavior in the rest of the library is paramatized down to
@@ -157,12 +164,14 @@ const Split = (ids, options = {}) => {
     // The pair object saves metadata like dragging state, position and
     // event listener references.
 
-    function setElementSize (el, size, gutSize) {
+    // If called with md = CONSTRAINED, size is expected to be in percent.
+    // If called with md = EXPANDED, size is expected to be in pixels.
+    function setElementSize (el, size, gutSize, md) {
         // Split.js allows setting sizes via numbers (ideally), or if you must,
         // by string, like '300px'. This is less than ideal, because it breaks
         // the fluid layout that `calc(% - px)` provides. You're on your own if you do that,
         // make sure you calculate the gutter size by hand.
-        const style = elementStyle(dimension, size, gutSize)
+        const style = elementStyle(dimension, size, gutSize, md)
 
         // eslint-disable-next-line no-param-reassign
         Object.keys(style).forEach(prop => {
@@ -188,13 +197,26 @@ const Split = (ids, options = {}) => {
     function adjust (offset) {
         const a = elements[this.a]
         const b = elements[this.b]
-        const percentage = a.size + b.size
 
-        a.size = (offset / this.size) * percentage
-        b.size = (percentage - ((offset / this.size) * percentage))
+        if (mode === EXPANDING) {
+            const parentSize = this.parent[getBoundingClientRect]()[dimension]
+            const newSize = offset - this.aGutterSize
+            const diff = newSize - a.sizePx
+            const newParentSize = parentSize + diff
 
-        setElementSize(a.element, a.size, this.aGutterSize)
-        setElementSize(b.element, b.size, this.bGutterSize)
+            a.sizePx = newSize
+
+            setElementSize(a.element, a.sizePx, 0, mode)
+            setElementSize(this.parent, newParentSize, 0, mode)
+        } else {
+            const percentage = a.size + b.size
+
+            a.size = (offset / this.size) * percentage
+            b.size = (percentage - ((offset / this.size) * percentage))
+
+            setElementSize(a.element, a.size, this.aGutterSize, mode)
+            setElementSize(b.element, b.size, this.bGutterSize, mode)
+        }
     }
 
     // drag, where all the magic happens. The logic is really quite simple:
@@ -232,8 +254,10 @@ const Split = (ids, options = {}) => {
         // Include the appropriate gutter sizes to prevent overflows.
         if (offset <= a.minSize + snapOffset + this.aGutterSize) {
             offset = a.minSize + this.aGutterSize
-        } else if (offset >= this.size - (b.minSize + snapOffset + this.bGutterSize)) {
-            offset = this.size - (b.minSize + this.bGutterSize)
+        } else if (mode === CONSTRAINED) {
+            if (offset >= this.size - (b.minSize + snapOffset + this.bGutterSize)) {
+                offset = this.size - (b.minSize + this.bGutterSize)
+            }
         }
 
         // Actually adjust the size.
@@ -394,8 +418,8 @@ const Split = (ids, options = {}) => {
         // Create the element object.
         const element = {
             element: elementOrSelector(id),
-            size: sizes[i],
-            minSize: minSizes[i],
+            size: sizes[i], // in percent
+            minSize: minSizes[i], // in pixels
         }
 
         let pair
@@ -455,15 +479,24 @@ const Split = (ids, options = {}) => {
         // Set the element size to our determined size.
         // Half-size gutters for first and last elements.
         if (i === 0 || i === ids.length - 1) {
-            setElementSize(element.element, element.size, gutterSize / 2)
+            setElementSize(element.element, element.size, gutterSize / 2, CONSTRAINED)
         } else {
-            setElementSize(element.element, element.size, gutterSize)
+            setElementSize(element.element, element.size, gutterSize, CONSTRAINED)
         }
 
         const computedSize = element.element[getBoundingClientRect]()[dimension]
 
         if (computedSize < element.minSize) {
             element.minSize = computedSize
+        }
+
+        if (mode === EXPANDING) {
+            element.sizePx = computedSize
+            if (i === 0 || i === ids.length - 1) {
+                setElementSize(element.element, element.sizePx, gutterSize / 2, mode)
+            } else {
+                setElementSize(element.element, element.sizePx, gutterSize, mode)
+            }
         }
 
         // After the first iteration, and we have a pair object, append it to the
@@ -485,8 +518,8 @@ const Split = (ids, options = {}) => {
                 a.size = newSizes[i - 1]
                 b.size = newSize
 
-                setElementSize(a.element, a.size, pair.aGutterSize)
-                setElementSize(b.element, b.size, pair.bGutterSize)
+                setElementSize(a.element, a.size, pair.aGutterSize, mode)
+                setElementSize(b.element, b.size, pair.bGutterSize, mode)
             }
         })
     }
@@ -509,7 +542,9 @@ const Split = (ids, options = {}) => {
     return {
         setSizes,
         getSizes () {
-            return elements.map(element => element.size)
+            return mode === CONSTRAINED ?
+                elements.map(element => element.size) :
+                elements.map(element => element.sizePx)
         },
         collapse (i) {
             if (i === pairs.length) {
