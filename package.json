@@ -41,8 +41,7 @@
     "test": "npm run lint && npm run build && grunt jasmine",
     "build": "rollup-multiple -c && npm run size",
     "watch": "rollup-multiple -cw",
-    "size": "echo \"gzip size: $(gzip-size $npm_package_minified_main)\"",
-    "postinstall": "opencollective postinstall"
+    "size": "echo \"gzip size: $(gzip-size $npm_package_minified_main)\""
   },
   "browserslist": [
     "Chrome >= 22",
@@ -52,9 +51,7 @@
     "IE >= 9",
     "IE 8"
   ],
-  "dependencies": {
-    "opencollective": "^1.0.3"
-  },
+  "dependencies": {},
   "collective": {
     "type": "opencollective",
     "url": "https://opencollective.com/splitjs"
