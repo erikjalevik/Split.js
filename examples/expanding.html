@@ -92,7 +92,10 @@
       cursor: 'col-resize',
       snapOffset: 0,
       minSize: 10,
-      sizes: [33, 33, 33, 0]
+      sizes: [33, 33, 33, 0],
+      onDrag: (dragInfo) => console.log("onDrag", dragInfo),
+      onDragStart: (dragInfo) => console.log("onDragStart", dragInfo),
+      onDragEnd: (dragInfo) => console.log("onDragEnd", dragInfo)
     })
     Split(['#va', '#vb', '#vc', '#vd'], {
       mode: 'expanding',

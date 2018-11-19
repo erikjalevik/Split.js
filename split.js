@@ -128,6 +128,7 @@ var Split = function (ids, options) {
     var clientAxis;
     var position;
     var elements;
+    var parentSizePx;
 
     // All DOM elements in the split should have a common parent. We can grab
     // the first elements parent and hope users read the docs because the
@@ -216,6 +217,7 @@ var Split = function (ids, options) {
             var newParentSize = parentSize + diff;
 
             a.sizePx = newSize;
+            parentSizePx = newParentSize;
 
             setElementSize(a.element, a.sizePx, 0, mode);
             setElementSize(this.parent, newParentSize, 0, mode);
@@ -228,6 +230,22 @@ var Split = function (ids, options) {
             setElementSize(a.element, a.size, this.aGutterSize, mode);
             setElementSize(b.element, b.size, this.bGutterSize, mode);
         }
+    }
+
+    function getDragInfo (pair) {
+        var dragInfo = (mode === EXPANDING) ? ({
+            aIndex: pair.a,
+            bIndex: pair.b,
+            aSize: elements[pair.a].sizePx,
+            bSize: elements[pair.b].sizePx,
+            parentSize: parentSizePx || pair.parent[getBoundingClientRect]()[dimension],
+        }) : ({
+            aIndex: pair.a,
+            bIndex: pair.b,
+            aSize: elements[pair.a].size,
+            bSize: elements[pair.b].size,
+        });
+        return dragInfo
     }
 
     // drag, where all the magic happens. The logic is really quite simple:
@@ -276,7 +294,7 @@ var Split = function (ids, options) {
 
         // Call the drag callback continously. Don't do anything too intensive
         // in this callback.
-        getOption(options, 'onDrag', NOOP)();
+        getOption(options, 'onDrag', NOOP)(getDragInfo(this));
     }
 
     // Cache some important sizes when drag starts, so we don't have to do that
@@ -311,7 +329,7 @@ var Split = function (ids, options) {
         var b = elements[self.b].element;
 
         if (self.dragging) {
-            getOption(options, 'onDragEnd', NOOP)();
+            getOption(options, 'onDragEnd', NOOP)(getDragInfo(self));
         }
 
         self.dragging = false;
@@ -358,7 +376,7 @@ var Split = function (ids, options) {
 
         // Call the onDragStart callback.
         if (!self.dragging) {
-            getOption(options, 'onDragStart', NOOP)();
+            getOption(options, 'onDragStart', NOOP)(getDragInfo(this));
         }
 
         // Don't actually drag the element. We emulate that in the drag function.
