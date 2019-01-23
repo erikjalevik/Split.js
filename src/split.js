@@ -202,13 +202,13 @@ const Split = (ids, options = {}) => {
         if (mode === EXPANDING) {
             const parentSize = this.parent[getBoundingClientRect]()[dimension]
             const newSize = offset - this.aGutterSize
-            const diff = newSize - a.sizePx
+            const diff = newSize - a.size
             const newParentSize = parentSize + diff
 
-            a.sizePx = newSize
+            a.size = newSize
             parentSizePx = newParentSize
 
-            setElementSize(a.element, a.sizePx, 0, mode)
+            setElementSize(a.element, a.size, 0, mode)
             setElementSize(this.parent, newParentSize, 0, mode)
         } else {
             const percentage = a.size + b.size
@@ -225,8 +225,8 @@ const Split = (ids, options = {}) => {
         const dragInfo = (mode === EXPANDING) ? ({
             aIndex: pair.a,
             bIndex: pair.b,
-            aSize: elements[pair.a].sizePx,
-            bSize: elements[pair.b].sizePx,
+            aSize: elements[pair.a].size,
+            bSize: elements[pair.b].size,
             parentSize: parentSizePx || pair.parent[getBoundingClientRect]()[dimension],
         }) : ({
             aIndex: pair.a,
@@ -436,7 +436,7 @@ const Split = (ids, options = {}) => {
         // Create the element object.
         const element = {
             element: elementOrSelector(id),
-            size: sizes[i], // in percent
+            size: sizes[i], // in percent if CONSTRAINED, in px if EXPANDING
             minSize: minSizes[i], // in pixels
         }
 
@@ -497,24 +497,15 @@ const Split = (ids, options = {}) => {
         // Set the element size to our determined size.
         // Half-size gutters for first and last elements.
         if (i === 0 || i === ids.length - 1) {
-            setElementSize(element.element, element.size, gutterSize / 2, CONSTRAINED)
+            setElementSize(element.element, element.size, gutterSize / 2, mode)
         } else {
-            setElementSize(element.element, element.size, gutterSize, CONSTRAINED)
+            setElementSize(element.element, element.size, gutterSize, mode)
         }
 
         const computedSize = element.element[getBoundingClientRect]()[dimension]
 
         if (computedSize < element.minSize) {
             element.minSize = computedSize
-        }
-
-        if (mode === EXPANDING) {
-            element.sizePx = computedSize
-            if (i === 0 || i === ids.length - 1) {
-                setElementSize(element.element, element.sizePx, gutterSize / 2, mode)
-            } else {
-                setElementSize(element.element, element.sizePx, gutterSize, mode)
-            }
         }
 
         // After the first iteration, and we have a pair object, append it to the
@@ -560,9 +551,7 @@ const Split = (ids, options = {}) => {
     return {
         setSizes,
         getSizes () {
-            return mode === CONSTRAINED ?
-                elements.map(element => element.size) :
-                elements.map(element => element.sizePx)
+            return elements.map(element => element.size)
         },
         collapse (i) {
             if (i === pairs.length) {
@@ -584,8 +573,8 @@ const Split = (ids, options = {}) => {
             }
         },
         destroy,
-        parent: parent,
-        pairs: pairs
+        parent,
+        pairs,
     }
 }
 

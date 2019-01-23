@@ -85,14 +85,15 @@
 </body>
 <script src="../split.js"></script>
 <script>
-    Split(['#ha', '#hb', '#hc', '#hd'], {
+  const gutterSize = 8;
+  Split(['#ha', '#hb', '#hc', '#hd'], {
       mode: 'expanding',
       direction: 'horizontal',
-      gutterSize: 8,
+      gutterSize: gutterSize,
       cursor: 'col-resize',
       snapOffset: 0,
       minSize: 10,
-      sizes: [33, 33, 33, 0],
+      sizes: [100 - gutterSize/2, 200 - gutterSize, 92 - gutterSize, 0 - gutterSize/2],
       onDrag: (dragInfo) => console.log("onDrag", dragInfo),
       onDragStart: (dragInfo) => console.log("onDragStart", dragInfo),
       onDragEnd: (dragInfo) => console.log("onDragEnd", dragInfo)
@@ -100,11 +101,11 @@
     Split(['#va', '#vb', '#vc', '#vd'], {
       mode: 'expanding',
       direction: 'vertical',
-      gutterSize: 8,
+      gutterSize: gutterSize,
       cursor: 'row-resize',
       snapOffset: 0,
       minSize: 10,
-      sizes: [33, 33, 33, 0]
+      sizes: [100 - gutterSize/2, 200 - gutterSize, 100 - gutterSize, 0 - gutterSize/2],
     })
 </script>
 </html>

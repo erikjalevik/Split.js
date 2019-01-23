@@ -213,13 +213,13 @@ var Split = function (ids, options) {
         if (mode === EXPANDING) {
             var parentSize = this.parent[getBoundingClientRect]()[dimension];
             var newSize = offset - this.aGutterSize;
-            var diff = newSize - a.sizePx;
+            var diff = newSize - a.size;
             var newParentSize = parentSize + diff;
 
-            a.sizePx = newSize;
+            a.size = newSize;
             parentSizePx = newParentSize;
 
-            setElementSize(a.element, a.sizePx, 0, mode);
+            setElementSize(a.element, a.size, 0, mode);
             setElementSize(this.parent, newParentSize, 0, mode);
         } else {
             var percentage = a.size + b.size;
@@ -236,8 +236,8 @@ var Split = function (ids, options) {
         var dragInfo = (mode === EXPANDING) ? ({
             aIndex: pair.a,
             bIndex: pair.b,
-            aSize: elements[pair.a].sizePx,
-            bSize: elements[pair.b].sizePx,
+            aSize: elements[pair.a].size,
+            bSize: elements[pair.b].size,
             parentSize: parentSizePx || pair.parent[getBoundingClientRect]()[dimension],
         }) : ({
             aIndex: pair.a,
@@ -447,7 +447,7 @@ var Split = function (ids, options) {
         // Create the element object.
         var element = {
             element: elementOrSelector(id),
-            size: sizes[i], // in percent
+            size: sizes[i], // in percent if CONSTRAINED, in px if EXPANDING
             minSize: minSizes[i], // in pixels
         };
 
@@ -508,24 +508,15 @@ var Split = function (ids, options) {
         // Set the element size to our determined size.
         // Half-size gutters for first and last elements.
         if (i === 0 || i === ids.length - 1) {
-            setElementSize(element.element, element.size, gutterSize / 2, CONSTRAINED);
+            setElementSize(element.element, element.size, gutterSize / 2, mode);
         } else {
-            setElementSize(element.element, element.size, gutterSize, CONSTRAINED);
+            setElementSize(element.element, element.size, gutterSize, mode);
         }
 
         var computedSize = element.element[getBoundingClientRect]()[dimension];
 
         if (computedSize < element.minSize) {
             element.minSize = computedSize;
-        }
-
-        if (mode === EXPANDING) {
-            element.sizePx = computedSize;
-            if (i === 0 || i === ids.length - 1) {
-                setElementSize(element.element, element.sizePx, gutterSize / 2, mode);
-            } else {
-                setElementSize(element.element, element.sizePx, gutterSize, mode);
-            }
         }
 
         // After the first iteration, and we have a pair object, append it to the
@@ -571,9 +562,7 @@ var Split = function (ids, options) {
     return {
         setSizes: setSizes,
         getSizes: function getSizes () {
-            return mode === CONSTRAINED ?
-                elements.map(function (element) { return element.size; }) :
-                elements.map(function (element) { return element.sizePx; })
+            return elements.map(function (element) { return element.size; })
         },
         collapse: function collapse (i) {
             if (i === pairs.length) {
@@ -596,7 +585,7 @@ var Split = function (ids, options) {
         },
         destroy: destroy,
         parent: parent,
-        pairs: pairs
+        pairs: pairs,
     }
 };
 
